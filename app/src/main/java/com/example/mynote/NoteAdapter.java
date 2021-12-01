@@ -13,14 +13,15 @@ import java.util.ArrayList;
 
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NotesViewHolder> {
     private ArrayList<Note> notes;
-private Listener listener;
+    private onNoteClickListener listener;
 
-    public Listener getListener(int position) {
-        return listener;
+    public void setListener(onNoteClickListener listener) {
+        this.listener = listener;
     }
 
-    public void setListener(Listener listener) {
-        this.listener = listener;
+    interface  onNoteClickListener {
+        void onClick(int position);
+        void onLongClick(int position);
     }
 
     public NoteAdapter(ArrayList<Note> notes) {
@@ -74,12 +75,23 @@ private Listener listener;
         //  private TextView textViewPriority;
         public NotesViewHolder(@NonNull View itemView) {
             super(itemView);
-        itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                listener.click(getAdapterPosition());
-            }
-        });
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (listener !=null){
+                        listener.onClick(getAdapterPosition());
+                    }
+                }
+            });
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (listener != null){
+                        listener.onLongClick(getAdapterPosition());
+                    }
+                    return true;
+                }
+            });
             textViewTitle = itemView.findViewById(R.id.textViewTitle);
             textViewDescription = itemView.findViewById(R.id.textViewDescription);
             textViewDayOfWeek = itemView.findViewById(R.id.textViewDayOfWeek);

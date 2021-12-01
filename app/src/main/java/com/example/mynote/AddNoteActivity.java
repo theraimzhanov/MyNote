@@ -1,6 +1,7 @@
 package com.example.mynote;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProviders;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,14 +16,14 @@ public class AddNoteActivity extends AppCompatActivity {
     private EditText editTextTitle,editTextDescription;
     private Spinner spinnerDaysOfWeek;
     private RadioGroup radioGroupPriority;
-    private NoteDataBase dataBase;
+private static MainViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_note);
 
-dataBase = NoteDataBase.getInstance(this);
+viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
 
         editTextTitle = findViewById(R.id.edittextTitle);
         editTextDescription = findViewById(R.id.edittextDescription);
@@ -36,12 +37,11 @@ dataBase = NoteDataBase.getInstance(this);
         int radioButtonId = radioGroupPriority.getCheckedRadioButtonId();
         RadioButton radioButton = findViewById(radioButtonId);
         int priority = Integer.parseInt(radioButton.getText().toString());
-           if (isFiil(title,description)){
+           if (isFull(title,description)){
         Note note = new Note(title,description,dayOfWeek,priority);
-               MainActivity.notes.add(note);
-        dataBase.noteDao().insertNote(note);
+
+      viewModel.insertNote(note);
         MainActivity.adapter.notifyDataSetChanged();
-        dataBase.noteDao().getAllNotes();
         Intent intent = new Intent(this,MainActivity.class);
         startActivity(intent);
                finish();
@@ -52,7 +52,7 @@ dataBase = NoteDataBase.getInstance(this);
 
 
     }
-            private boolean isFiil(String title,String describtion){
+            private boolean isFull(String title, String describtion){
             return !title.isEmpty() && !describtion.isEmpty();
             }
   }

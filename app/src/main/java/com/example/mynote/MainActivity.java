@@ -2,6 +2,11 @@ package com.example.mynote;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -16,8 +21,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerViewNotes;
-    private NoteDataBase dataBase;
-    List<Note> noteFromData;
+ private MainViewModel viewModel;
 
     public static final ArrayList<Note> notes = new ArrayList<>();
     public static NoteAdapter adapter;
@@ -27,25 +31,41 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        dataBase = NoteDataBase.getInstance(this);
-        noteFromData = new ArrayList<>();
 
-
+           viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
         recyclerViewNotes = findViewById(R.id.recyclerViewNotes);
         adapter = new NoteAdapter(notes);
         recyclerViewNotes.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewNotes.setAdapter(adapter);
         getData();
 
-        adapter.setListener(new Listener() {
+    adapter.setListener(new NoteAdapter.onNoteClickListener() {
+        @Override
+        public void onClick(int position) {
+        }
+
+        @Override
+        public void onLongClick(int position) {
+            remove(position);
+        }
+    });
+        ItemTouchHelper touchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT|ItemTouchHelper.RIGHT) {
             @Override
-            public void click(int position) {
-                Note note = notes.get(position);
-                dataBase.noteDao().deleteNote(note);
-                getData();
-                adapter.notifyDataSetChanged();
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+remove(viewHolder.getAdapterPosition());
             }
         });
+        touchHelper.attachToRecyclerView(recyclerViewNotes);
+    }
+
+    private void remove(int position){
+        Note note = notes.get(position);
+                viewModel.deleteNote(note);
     }
 
 
@@ -55,15 +75,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        noteFromData = dataBase.noteDao().getAllNotes();
-        notes.clear();
-        notes.addAll(noteFromData);
-        adapter.notifyDataSetChanged();
+      LiveData<List<Note>>noteFromData = viewModel.getNotes();
+        noteFromData.observe(this, new Observer<List<Note>>() {
+            @Override
+            public void onChanged(List<Note> notesFromLiveData) {
+                 notes.clear();
+                notes.addAll(notesFromLiveData);
+                adapter.notifyDataSetChanged();
+            }
+        });
     }
 
     public void reset(View view) {
-        dataBase.noteDao().deleteAllNotes();
-        notes.clear();
+        viewModel.deleteAllNote();
         adapter.notifyDataSetChanged();
     }
 }

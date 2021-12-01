@@ -13,7 +13,7 @@ import java.util.List;
 public interface NoteDao {
 
     @Query("SELECT * FROM Notes ORDER BY dayOfWeek")
-   List<Note> getAllNotes();
+   LiveData<List<Note>> getAllNotes();
 
     @Insert
     void insertNote(Note note);
